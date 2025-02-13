@@ -2,6 +2,9 @@
 using LibraryManagementBackend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
 namespace LibraryManagementBackend.Controllers
 {
@@ -16,59 +19,93 @@ namespace LibraryManagementBackend.Controllers
             _context = context;
         }
 
-        //get list of all books
+        // Get list of all books
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
         {
-            return await _context.Books.ToListAsync();
+            try
+            {
+                return await _context.Books.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving books.", error = ex.Message });
+            }
         }
 
-        //get a book by id
+        // Get a book by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
-            if (book == null) return NotFound();
-            return book;
+            try
+            {
+                var book = await _context.Books.FindAsync(id);
+                if (book == null) return NotFound();
+                return book;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while retrieving the book.", error = ex.Message });
+            }
         }
 
-        //add a new book record
+        // Add a new book record
         [HttpPost]
         public async Task<ActionResult<Book>> CreateBook(Book book)
         {
-            // Check if a book with the same ID already exists
-            var existingBook = await _context.Books.FindAsync(book.Id);
-            if (existingBook != null)
+            try
             {
-                return Conflict(new { message = "A book with this ID already exists. Please use a different ID." });
-            }
+                var existingBook = await _context.Books.FindAsync(book.Id);
+                if (existingBook != null)
+                {
+                    return Conflict(new { message = "A book with this ID already exists. Please use a different ID." });
+                }
 
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+                _context.Books.Add(book);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while adding the book.", error = ex.Message });
+            }
         }
 
-        //update a book record by id
+        // Update a book record by ID
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBook(int id, Book book)
         {
             if (id != book.Id) return BadRequest();
 
-            _context.Entry(book).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                _context.Entry(book).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the book.", error = ex.Message });
+            }
         }
 
-        //delete a book by id
+        // Delete a book by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
-            if (book == null) return NotFound();
+            try
+            {
+                var book = await _context.Books.FindAsync(id);
+                if (book == null) return NotFound();
 
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
-            return NoContent();
+                _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the book.", error = ex.Message });
+            }
         }
     }
 }
